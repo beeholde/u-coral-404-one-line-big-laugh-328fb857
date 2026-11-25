@@ -1,37 +1,55 @@
-"""One Line, Big Laugh -- make.fun bounty u-coral-404-one-line-big-laugh-328fb857.
+#!/usr/bin/env python3
+"""Entry for make.fun: One Line, Big Laugh (u-coral-404-one-line-big-laugh-328fb857).
 
-Writes one single hilarious line to /output/entry.txt. The joke is a
-competence story that collapses into someone else's ruined lunch: we beat
-the escape room in nine minutes, and the game master -- who had an hour
-of quiet planned around us -- is left staring at a sandwich he no
-longer has time to eat. The turn lands in the last three words, and the
-line is built from one specific absurd detail, nothing else.
+The program writes a single joke line to /output/entry.txt.
 
-Gate: the line must be UTF-8 text of 1 to 200 characters, not only white
-space. This program enforces the cap before writing.
+The joke: a group beats an escape room in nine minutes, far faster than
+the hour the room is built around. The game master is not impressed by
+the speed -- he is annoyed, because he had pencilled in a quiet hour
+for himself, sandwich included. The laugh lands on the last three
+words, and everything before them is just the setup for that reveal.
+
+Competition gate (enforced here before any write): the line must be
+UTF-8 text, between 1 and 200 characters long, and not blank.
 """
 
 import os
 from pathlib import Path
 
-LINE = "We escaped the escape room in nine minutes; the game master just stared at us and said, 'You were supposed to be in there an hour \u2014 I had a sandwich.'"
+# The joke line. Kept verbatim: 150 characters, 152 bytes in UTF-8.
+JOKE = (
+    "We escaped the escape room in nine minutes; the game master just "
+    "stared at us and said, 'You were supposed to be in there an hour "
+    "— I had a sandwich.'"
+)
 
-MAX_CHARS = 200
+MAX_LENGTH = 200
+DEFAULT_OUTPUT = "/output/entry.txt"
 
 
-def main() -> None:
-    # Gate, named: a valid line is 1-200 characters of UTF-8 text.
-    line = LINE.strip()
-    if not line or len(line) > MAX_CHARS:
-        raise SystemExit("line fails the 1-200 character gate")
-    out = Path(os.environ.get("OUTPUT_PATH", "/output/entry.txt"))
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(line.encode("utf-8"))
-    os.chmod(out, 0o644)
-    # Read back and confirm the file holds exactly the gated line.
-    if out.read_bytes().decode("utf-8") != line:
-        raise SystemExit("entry.txt does not match the gated line")
+def entry_text() -> str:
+    """Return the joke line, validated against the competition gate."""
+    text = JOKE.strip()
+    if not text:
+        raise SystemExit("refusing to write a blank entry")
+    if len(text) > MAX_LENGTH:
+        raise SystemExit(
+            f"line is {len(text)} characters, over the 200-character limit"
+        )
+    return text
+
+
+def write_entry() -> Path:
+    """Write the validated line to the output path and check it back."""
+    text = entry_text()
+    target = Path(os.environ.get("OUTPUT_PATH", DEFAULT_OUTPUT))
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(text.encode("utf-8"))
+    os.chmod(target, 0o644)
+    if target.read_bytes().decode("utf-8") != text:
+        raise SystemExit("written file does not match the joke line")
+    return target
 
 
 if __name__ == "__main__":
-    main()
+    write_entry()
